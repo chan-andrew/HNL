@@ -1,6 +1,6 @@
 # Hammer Neuromodulation Lab (HNL)
 
-This repository contains MATLAB scripts used for processing data from **Medtronic Percept PC Neurostimulators** with BrainSense technology, as part of research conducted in the **Hammer Neuromodulation Lab** on patients with **Parkinson's Disease (PD)**.
+This repository contains MATLAB scripts used for processing data from **Medtronic Percept™ PC Neurostimulators** with BrainSense™ technology, as part of research conducted in the **Hammer Neuromodulation Lab** on patients with **Parkinson's Disease (PD)**.
 
 ## Overview
 
@@ -29,6 +29,14 @@ Processes a single JSON file from a Percept recording session and outputs a clea
 - Synchronizes signal and stimulation values.
 - Useful for time-series visualization, feature extraction, or integration into larger analyses.
 
+### `droppedpacketdetectionworking.m`
+
+Checks for dropped data packets that may have occurred during syncing between the DBS implant and the tablet:
+
+- Identifies missing or irregular time intervals in the data stream.
+- Flags potential communication errors that could affect data integrity.
+- Helps ensure accurate temporal alignment for downstream analyses.
+
 ---
 
 ## Requirements
@@ -43,7 +51,8 @@ Processes a single JSON file from a Percept recording session and outputs a clea
 
 1. Clone the repository or download the scripts.
 2. Run `Chan_LoadJSON.m` to organize and label your patient JSON files.
-3. Use `rawsignalandstimulationintensity2.m` to convert JSON data into MATLAB tables for further processing.
+3. Use `rawsignalandstimulationintensity2.m` to convert JSON data into MATLAB tables.
+4. Run `droppedpacketdetectionworking.m` to check for time-series discontinuities or packet loss in the raw data.
 
 ---
 
