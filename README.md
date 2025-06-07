@@ -1,6 +1,6 @@
 # Hammer Neuromodulation Lab (HNL)
 
-This repository contains MATLAB scripts used for processing data from **Medtronic Percept™ PC Neurostimulators** with BrainSense™ technology, as part of research conducted in the **Hammer Neuromodulation Lab** on patients with **Parkinson's Disease (PD)**.
+This repository contains MATLAB scripts used for processing data from **Medtronic Percept PC Neurostimulators** with BrainSense technology, as part of research conducted in the **Hammer Neuromodulation Lab** on patients with **Parkinson's Disease (PD)**.
 
 ## Overview
 
