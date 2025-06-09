@@ -104,8 +104,7 @@ function final = signalvsstimulation_part2()
         end
 
         % Append to final table
-        T = table(tvec, rawLeft, stimL, rawRight, stimR, ...
-                  'VariableNames',{'Time','LeftRaw','LeftStim_mA','RightRaw','RightStim_mA'});
+        T = table(tvec, rawLeft, stimL, rawRight, stimR, 'VariableNames',{'Time','LeftRaw','LeftStim_mA','RightRaw','RightStim_mA'});
         final = [final; T];
     end
 
@@ -145,8 +144,9 @@ function final = signalvsstimulation_part2()
 %}
 
     % Part 2: Coregister full spectrum with stim intensity  
-      segmentDuration = 10;  % seconds
-      fs = 250;              % Hz
+    % variables used in functions below  
+      segmentDuration = 10; % seconds
+      fs = 250; % Hz
       samplesPerSegment = segmentDuration * fs;
       welchWindow = 500;
       overlap = 250;
@@ -175,8 +175,7 @@ function final = signalvsstimulation_part2()
           [pxxR, fR] = pwelch(double(seg.RightRaw), welchWindow, overlap, nfft, fs);
           avgStimR = mean(seg.RightStim_mA);
 
-          gammaData = [gammaData; table(s, {fL}, {pxxL}, avgStimL, {fR}, {pxxR}, avgStimR, ...
-              'VariableNames', {'Segment','FreqL','PowerL','AvgStimL','FreqR','PowerR','AvgStimR'})];
+          gammaData = [gammaData; table(s, {fL}, {pxxL}, avgStimL, {fR}, {pxxR}, avgStimR, 'VariableNames', {'Segment','FreqL','PowerL','AvgStimL','FreqR','PowerR','AvgStimR'})];
       end
 
       % Define gamma range (e.g., 60–90 Hz)
@@ -275,8 +274,7 @@ function S = buildTimeStamps(S, maxSeq, type)
             dt = seconds(1/fs);
         end
         
-        t0 = datetime(S(k).FirstPacketDateTime, ...
-                     'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
+        t0 = datetime(S(k).FirstPacketDateTime, 'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
         
         % tStart is the start time of each packet/segment
         tStart = t0 + milliseconds(ticks - ticks(1)); % Relative to the first tick in this stream
