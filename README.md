@@ -14,36 +14,47 @@ These tools were developed to streamline the organization and processing of JSON
 
 Organizes raw JSON files exported from Medtronic's Percept device:
 
-- Automatically renames files using a standardized format:  
+* Automatically renames files using a standardized format:
   `PatientLastName_Date_Diagnosis.json`
-- Sorts and moves each file into a structured directory system based on patient identity.
-- Outputs organized files into a selected Box project folder for further analysis or archival.
+* Sorts and moves each file into a structured directory system based on patient identity.
+* Outputs organized files into a selected Box project folder for further analysis or archival.
 
 ### `rawsignalandstimulationintensity2.m`
 
 Processes a single JSON file from a Percept recording session and outputs a clean MATLAB table with:
 
 | Time (s) | Left LFP Signal | Right LFP Signal | Left Stimulation Intensity | Right Stimulation Intensity |
-|----------|------------------|-------------------|-----------------------------|------------------------------|
+| -------- | --------------- | ---------------- | -------------------------- | --------------------------- |
 
-- Synchronizes signal and stimulation values.
-- Useful for time-series visualization, feature extraction, or integration into larger analyses.
+* Synchronizes signal and stimulation values.
+* Useful for time-series visualization, feature extraction, or integration into larger analyses.
+
+### `signalvsstimulation.m`
+
+Coregisters high-rate LFP signal data with low-rate stimulation intensity and plots them together:
+
+* Reads a JSON file and decodes time-domain (TD) and LFP streams.
+* Builds precise timestamps for each TD sample and LFP packet event.
+* Interpolates stimulation current (mA) onto each TD timestamp using previous-value interpolation.
+* Outputs a MATLAB table `final` with columns:
+  **Time**, **LeftRaw**, **LeftStim\_mA**, **RightRaw**, **RightStim\_mA**
+* Generates a two-panel figure overlaying raw LFP signals (blue) and stimulation intensity (red) on dual y-axes for left and right channels.
 
 ### `droppedpacketdetectionworking.m`
 
 Checks for dropped data packets that may have occurred during syncing between the DBS implant and the tablet:
 
-- Identifies missing or irregular time intervals in the data stream.
-- Flags potential communication errors that could affect data integrity.
-- Helps ensure accurate temporal alignment for downstream analyses.
+* Identifies missing or irregular time intervals in the data stream.
+* Flags potential communication errors that could affect data integrity.
+* Helps ensure accurate temporal alignment for downstream analyses.
 
 ---
 
 ## Requirements
 
-- MATLAB R2021a or later
-- JSON files exported directly from Medtronic Percept PC
-- [JSONlab Toolbox](https://github.com/fangq/jsonlab) (if needed for parsing)
+* MATLAB R2021a or later
+* JSON files exported directly from Medtronic Percept PC
+* [JSONlab Toolbox](https://github.com/fangq/jsonlab) (if needed for parsing)
 
 ---
 
@@ -52,12 +63,13 @@ Checks for dropped data packets that may have occurred during syncing between th
 1. Clone the repository or download the scripts.
 2. Run `Chan_LoadJSON.m` to organize and label your patient JSON files.
 3. Use `rawsignalandstimulationintensity2.m` to convert JSON data into MATLAB tables.
-4. Run `droppedpacketdetectionworking.m` to check for time-series discontinuities or packet loss in the raw data.
+4. Execute `signalvsstimulation.m` to visualize coregistered LFP signal and stimulation intensity.
+5. Run `droppedpacketdetectionworking.m` to check for time-series discontinuities or packet loss in the raw data.
 
 ---
 
 ## Author
 
-**Andrew Chan**  
-Bioengineering, University of Pittsburgh  
+**Andrew Chan**
+Bioengineering, University of Pittsburgh
 Researcher at the Hammer Neuromodulation Lab
