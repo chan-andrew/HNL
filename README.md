@@ -29,7 +29,7 @@ Processes a single JSON file from a Percept recording session and outputs a clea
 * Synchronizes signal and stimulation values.
 * Useful for time-series visualization, feature extraction, or integration into larger analyses.
 
-### `signalvsstimulation.m`
+### `signalvsstimulation_part1.m`
 
 Coregisters high-rate LFP signal data with low-rate stimulation intensity and plots them together:
 
