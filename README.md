@@ -92,5 +92,8 @@ Checks for dropped data packets that may have occurred during syncing between th
 ## Author
 
 **Andrew Chan**
+
 Bioengineering, University of Pittsburgh
+
+
 Researcher at the Hammer Neuromodulation Lab
