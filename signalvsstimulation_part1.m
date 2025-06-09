@@ -1,4 +1,4 @@
-function final = signalvsstimulation()
+function final = signalvsstimulation_part1()
 
     % 1) Prompt for JSON file
     [fileName, filePath] = uigetfile('*.json','Select BrainSense JSON file');
@@ -29,7 +29,7 @@ function final = signalvsstimulation()
     acc_orig_Rstim_values = [];
 
     % 4) Align channels by FirstPacketDateTime (for warning only)
-    tdFP  = datetime({TD.FirstPacketDateTime},  'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
+    tdFP = datetime({TD.FirstPacketDateTime},  'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
     lfpFP = datetime({LFP.FirstPacketDateTime}, 'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
     idxMap = nan(size(lfpFP));
     for i = 1:numel(lfpFP)
@@ -121,7 +121,7 @@ function final = signalvsstimulation()
         disp('''final'' table is empty. Check LFP/TD matching.');
     end
 
-    % 7) Plot coregistered TD & stim intensity
+    % Part 1: Plot coregistered TD & stim intensity
     figure('Name','Signal vs Stimulation');
     subplot(2,1,1);
       yyaxis left;
