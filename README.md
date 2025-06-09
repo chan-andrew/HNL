@@ -104,4 +104,4 @@ Checks for dropped data packets that may have occurred during syncing between th
 
 Bioengineering, University of Pittsburgh
 
-Researcher at the Hammer Neuromodulation Lab
+Researcher at the Hammer Neuromodulation Lab, University of Pennsylvania
