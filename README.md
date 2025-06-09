@@ -30,6 +30,15 @@ Processes a single JSON file from a Percept recording session and outputs a clea
 * Useful for time-series visualization, feature extraction, or integration into larger analyses.
 * Provides the processed data for signalvsstimuation scripts.
 
+### `realtimestampingv2.m`
+
+Generates accurate real-time timestamps for both Time Domain and LFP data in BrainSense JSON files:
+
+* Anchors signals to UTC using the first packet timestamp and reconstructs sample-level timestamps based on sampling frequency and packet size.
+* Detects and flags dropped packets and timing misalignments due to sequence number or tick discrepancies.
+* Supports multiple LFP data structures (`BrainSenseLfp`, `LFPData`, `LFPmontageTimeDomain`) and assigns timestamp arrays back to MATLAB workspace for analysis.
+* Ensures precise alignment across neural signal streams for time-resolved analyses.
+
 ### `signalvsstimulation_part1.m`
 
 Coregisters high-rate LFP signal data with low-rate stimulation intensity and plots them together:
