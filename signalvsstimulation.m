@@ -19,14 +19,14 @@ function final = signalvsstimulation()
 
     % 3) Build timestamps for TD and LFP
     maxSeq = 255;
-    TD  = buildTimeStamps(data.BrainSenseTimeDomain, maxSeq, 'TD');
-    LFP = buildTimeStamps(data.BrainSenseLfp,       maxSeq, 'LFP');
+    TD = buildTimeStamps(data.BrainSenseTimeDomain, maxSeq, 'TD');
+    LFP = buildTimeStamps(data.BrainSenseLfp, maxSeq, 'LFP');
 
     % Initialize accumulators for plotting
     acc_orig_Lstim_times_utc = [];
-    acc_orig_Lstim_values     = [];
+    acc_orig_Lstim_values = [];
     acc_orig_Rstim_times_utc = [];
-    acc_orig_Rstim_values     = [];
+    acc_orig_Rstim_values = [];
 
     % 4) Align channels by FirstPacketDateTime (for warning only)
     tdFP  = datetime({TD.FirstPacketDateTime},  'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
@@ -61,9 +61,9 @@ function final = signalvsstimulation()
         end
 
         % Get time series and raw signals
-        tvec    = TD(idxL).TimeStamps;
+        tvec = TD(idxL).TimeStamps;
         rawLeft = TD(idxL).TimeDomainData(:);
-        rawRight= TD(idxR).TimeDomainData(:);
+        rawRight = TD(idxR).TimeDomainData(:);
 
         % Initialize local stim arrays for this channel
         current_maL = [];
@@ -72,18 +72,18 @@ function final = signalvsstimulation()
         % Collect stimulation events for this LFP stream
         if isfield(LFP(j),'LfpData') && ~isempty(LFP(j).LfpData)
             pkt_ticks = arrayfun(@(pkt) pkt.TicksInMs, LFP(j).LfpData);
-            t0_LFP    = datetime(LFP(j).FirstPacketDateTime,'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
+            t0_LFP = datetime(LFP(j).FirstPacketDateTime,'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
             evt_times = t0_LFP + milliseconds(pkt_ticks - pkt_ticks(1));
 
             if isfield(LFP(j).LfpData(1),'Left') && isfield(LFP(j).LfpData(1).Left,'mA')
                 current_maL = arrayfun(@(pkt) pkt.Left.mA, LFP(j).LfpData);
                 acc_orig_Lstim_times_utc = [acc_orig_Lstim_times_utc; evt_times(:)];
-                acc_orig_Lstim_values     = [acc_orig_Lstim_values;     current_maL(:)];
+                acc_orig_Lstim_values = [acc_orig_Lstim_values; current_maL(:)];
             end
             if isfield(LFP(j).LfpData(1),'Right') && isfield(LFP(j).LfpData(1).Right,'mA')
                 current_maR = arrayfun(@(pkt) pkt.Right.mA, LFP(j).LfpData);
                 acc_orig_Rstim_times_utc = [acc_orig_Rstim_times_utc; evt_times(:)];
-                acc_orig_Rstim_values     = [acc_orig_Rstim_values;     current_maR(:)];
+                acc_orig_Rstim_values = [acc_orig_Rstim_values; current_maR(:)];
             end
         end
 
@@ -137,7 +137,7 @@ function final = signalvsstimulation()
       plot(final.RightRaw);
       ylabel('Right Raw Signal');
       yyaxis right;
-      plot(final.LeftStim_mA);
+      plot(final.RightStim_mA);
       ylabel('Right Stim (mA)');
       title('Right Signal & Stim Intensity');
       xlabel('Time'); grid on;
@@ -193,15 +193,15 @@ function S = buildTimeStamps(S, maxSeq, type)
             continue;
         end
 
-        fs   = S(k).SampleRateInHz;
+        fs = S(k).SampleRateInHz;
         if fs == 0 % Avoid division by zero if SampleRateInHz is 0
             warning('SampleRateInHz is 0 for %s channel %d (%s). Timestamps may be incorrect.', type, k, S(k).Channel);
             dt = seconds(0); % Or handle as error / assign NaN
         else
-            dt   = seconds(1/fs);
+            dt = seconds(1/fs);
         end
         
-        t0   = datetime(S(k).FirstPacketDateTime, ...
+        t0 = datetime(S(k).FirstPacketDateTime, ...
                      'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
         
         % tStart is the start time of each packet/segment
