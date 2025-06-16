@@ -91,8 +91,22 @@ Extracts and aligns the stimulation rate from LFP data to each time‐domain sam
 * Extracts the corresponding `RateInHertz` from `TherapySnapshot.Left` or `.Right` and assigns it to `StimRateHz`.
 * Saves the updated `BrainSenseTimeDomain` table back into the base workspace for downstream analysis.
 
-**Usage:**  
-Run `addingstimrate` in MATLAB to automatically load your JSON file and annotate `BrainSenseTimeDomain` with stimulation rates.
+### `threecolumns.m`
+
+Adds a structured column of nested tables to `BrainSenseTimeDomain`, containing **DateTime**, **Stimulation Amplitude**, and a placeholder for **Gamma Power**:
+
+* Prompts for a BrainSense JSON file and decodes its contents.
+* Converts `BrainSenseTimeDomain` to a MATLAB table if not already formatted.
+* Parses all timestamps (`FirstPacketDateTime`) into `datetime` objects with UTC timezone.
+* For each time-domain row, finds the corresponding LFP packet within ±1.5 seconds.
+* Confirms that the LFP packet contains a matching channel (e.g. `'ZERO_TWO_LEFT'`).
+* Extracts the stimulation rate (`RateInHertz`) and adds it to a new `StimRateHz` column.
+* Calculates **average stimulation amplitude** (in mA) from LFP samples and stores it per row.
+* Constructs a new column `ThreePart` containing 1×3 sub-tables with:
+  - `DateTime`
+  - `StimAmp` (average amplitude)
+  - `GammaPower` (placeholder set to `NaN`)
+* Outputs the updated `BrainSenseTimeDomain` table to the base workspace for downstream analysis.
 
 ---
 
