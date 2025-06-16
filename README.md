@@ -104,16 +104,6 @@ Run `addingstimrate` in MATLAB to automatically load your JSON file and annotate
 
 ---
 
-## Usage
-
-1. Clone the repository or download the scripts.
-2. Run `Chan_LoadJSON.m` to organize and label your patient JSON files.
-3. Use `rawsignalandstimulationintensity2.m` to convert JSON data into MATLAB tables.
-4. Execute `signalvsstimulation.m` to visualize coregistered LFP signal and stimulation intensity.
-5. Run `droppedpacketdetectionworking.m` to check for time-series discontinuities or packet loss in the raw data.
-
----
-
 ## Author
 
 **Andrew Chan**
