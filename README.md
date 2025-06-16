@@ -105,7 +105,7 @@ Adds a structured column of nested tables to `BrainSenseTimeDomain`, containing 
 * Constructs a new column `ThreePart` containing 1×3 sub-tables with:
   - `DateTime`
   - `StimAmp` (average amplitude)
-  - `GammaPower` (placeholder set to `NaN`)
+  - `GammaPower` (placeholder set to `NaN` for now)
 * Outputs the updated `BrainSenseTimeDomain` table to the base workspace for downstream analysis.
 
 ---
