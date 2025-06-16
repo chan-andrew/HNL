@@ -100,7 +100,6 @@ Run `addingstimrate_part1` in MATLAB to automatically load your JSON file and an
 
 * MATLAB R2021a or later
 * JSON files exported directly from Medtronic Percept PC
-* [JSONlab Toolbox](https://github.com/fangq/jsonlab) (if needed for parsing)
 
 ---
 
