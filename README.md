@@ -78,6 +78,22 @@ Checks for dropped data packets that may have occurred during syncing between th
 * Flags potential communication errors that could affect data integrity.
 * Helps ensure accurate temporal alignment for downstream analyses.
 
+### `ProcessStimRate.m`
+
+Extracts and aligns the stimulation rate from LFP data to each time‐domain sample:
+
+* Prompts for a BrainSense JSON file and decodes its contents.
+* Converts the raw `BrainSenseTimeDomain` struct array into a MATLAB table.
+* Adds a new `StimRateHz` column, initialized to `NaN`.
+* Parses all packet timestamps into `datetime` objects with UTC timezone.
+* For each time‐domain row, finds the matching LFP packet within ±1.5 s.
+* Splits combined LFP channel pairs (e.g. `'ZERO_TWO_LEFT,ZERO_TWO_RIGHT'`) and selects the side matching the time‐domain channel.
+* Extracts the corresponding `RateInHertz` from `TherapySnapshot.Left` or `.Right` and assigns it to `StimRateHz`.
+* Saves the updated `BrainSenseTimeDomain` table back into the base workspace for downstream analysis.
+
+**Usage:**  
+Run `addingstimrate` in MATLAB to automatically load your JSON file and annotate `BrainSenseTimeDomain` with stimulation rates.
+
 ---
 
 ## Requirements
