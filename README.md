@@ -108,6 +108,30 @@ Adds a structured column of nested tables to `BrainSenseTimeDomain`, containing 
   - `GammaPower` (placeholder set to `NaN` for now)
 * Outputs the updated `BrainSenseTimeDomain` table to the base workspace for downstream analysis.
 
+* ### `timedomain.m`
+
+Plots **raw time-domain neural signals** and corresponding **stimulation amplitude (mA)** for a user-selected channel and stimulation rate combination from Percept JSON files.
+
+**Key Features:**
+
+* Prompts the user to select a BrainSense JSON file and decodes both `BrainSenseTimeDomain` and `BrainSenseLfp` data.
+* Calculates sample-level timestamps using `FirstPacketDateTime` fields with proper UTC alignment.
+* Matches each time-domain row with the nearest LFP packet (within ±1.5 seconds) and extracts the corresponding stimulation rate (`RateInHertz`), storing it in a new column `StimRateHz`.
+* Groups rows by unique `(Channel, StimRateHz)` combinations and allows user selection.
+* For each selected group:
+  - Extracts time-aligned stimulation amplitude data from the LFP stream (sampled at 2 Hz).
+  - Aggregates raw signal samples from time-domain data (sampled at 250 Hz) and builds timestamp vectors (4 ms intervals).
+* Plots the raw signal and stimulation amplitude on dual y-axes:
+  - **Left y-axis**: LFP amplitude (blue)
+  - **Right y-axis**: Stimulation amplitude in mA (red)
+* Highlights dropped packet regions (time gaps >50 ms) using shaded patches and optional annotations.
+* Dynamically adjusts both y-axes so their zero lines align visually.
+* Displays statistics about signal and stimulation data, including duration, sampling rate, and range.
+* Pushes the updated `BrainSenseTimeDomain` table back to the MATLAB workspace with appended `StimRateHz` data.
+
+This script is especially useful for exploring **real-time relationships** between stimulation amplitude and raw neural activity in a visual and quantitative manner, enabling exploratory analysis of adaptive DBS responses in Parkinson’s Disease patients.
+
+
 ---
 
 ## Requirements
