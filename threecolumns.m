@@ -1,30 +1,35 @@
-%% 1) Prompt for JSON file and decode
+% 1) Prompt for JSON file and decode
 [fileName, filePath] = uigetfile('*.json','Select a BrainSense JSON file');
 if isequal(fileName,0)
     error('No file selected. Exiting.');
 end
 jsonText = fileread(fullfile(filePath,fileName));
 data = jsondecode(jsonText);
-%% 2) Extract the two fields
+
+% 2) Extract the two fields
 if ~isfield(data,'BrainSenseTimeDomain') || ~isfield(data,'BrainSenseLfp')
     error('JSON missing required fields.');
 end
 rawTD = data.BrainSenseTimeDomain;
 BrainSenseLfp = data.BrainSenseLfp;
-%% 3) Convert to table if needed
+
+% 3) Convert to table if needed
 if ~istable(rawTD)
     BrainSenseTimeDomain = struct2table(rawTD);
 else
     BrainSenseTimeDomain = rawTD;
 end
-%% 4) Initialize StimRateHz
+
+% 4) Initialize StimRateHz
 nTD = height(BrainSenseTimeDomain);
 BrainSenseTimeDomain.StimRateHz = nan(nTD,1);
-%% 5) Parse timestamps once
+
+% 5) Parse timestamps once
 tdTimes  = datetime(BrainSenseTimeDomain.FirstPacketDateTime, 'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
 nLFP = numel(BrainSenseLfp);
 lfpTimes = datetime({BrainSenseLfp.FirstPacketDateTime}, 'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
-%% 6) Loop & match ±1.5 s
+
+% 6) Loop & match ±1.5 s
 tol = seconds(1.5); % can change this down the line if the buffer needs to be tighter
 for i = 1:nTD
     tdChan = BrainSenseTimeDomain.Channel{i};
@@ -53,7 +58,8 @@ for i = 1:nTD
     
     BrainSenseTimeDomain.StimRateHz(i) = rate;
 end
-%% 8) Build a "ThreePart" column of openable sub‐tables containing DateTime (placeholders for StimAmp & GammaPower)
+
+% 7) Build a "ThreePart" column of openable sub‐tables containing DateTime (placeholders for StimAmp & GammaPower)
 nTD = height(BrainSenseTimeDomain);
 % convert the original ISO strings to datetime once
 DateTime = datetime(BrainSenseTimeDomain.FirstPacketDateTime, 'InputFormat','yyyy-MM-dd''T''HH:mm:ss.SSS''Z''','TimeZone','UTC');
@@ -72,9 +78,11 @@ for i = 1:nTD
 end
 % attach it as a new column to your main table
 BrainSenseTimeDomain.ThreePart = threePartCells;
-%% 10) Push updated table back to base workspace
+
+% 8) Push updated table back to base workspace
 assignin('base','BrainSenseTimeDomain',BrainSenseTimeDomain);
-%% 11) Debug version - Extract Stimulation Amplitude from BrainSenseLfp
+
+% 9) Debug version - Extract Stimulation Amplitude from BrainSenseLfp
 fprintf('Starting stimulation amplitude extraction...\n');
 fprintf('Number of TimeDomain rows: %d\n', nTD);
 fprintf('Number of LFP entries: %d\n', nLFP);
@@ -166,7 +174,8 @@ for i = 1:nTD
         fprintf('No mA values found\n');
     end
 end
-%% 12) Robust Gamma Power Extraction (60-90 Hz) for all rows
+
+% 10) Robust Gamma Power Extraction (60-90 Hz) for all rows
 fprintf('Starting gamma power extraction for all rows...\n');
 % Define gamma frequency band
 gamma_low = 60;   % Hz
@@ -317,10 +326,12 @@ end
 fprintf('\nGamma power extraction complete!\n');
 fprintf('Successful rows: %d/%d\n', successful_rows, nTD);
 fprintf('Failed rows: %d/%d\n', failed_rows, nTD);
-%% 13) Push updated table back to base workspace
+
+% 11) Push updated table back to base workspace
 assignin('base','BrainSenseTimeDomain',BrainSenseTimeDomain);
 fprintf('Updated BrainSenseTimeDomain saved to workspace.\n');
-%% 14) Extract data from ThreePart tables and create plots
+
+% 12) Extract data from ThreePart tables and create plots
 fprintf('\nExtracting data for plotting...\n');
 % Initialize arrays to store extracted data
 all_datetime = [];
@@ -498,8 +509,7 @@ else
     fprintf('No datetime data found for plotting\n');
 end
 
-%% 15) Create Scatter Plot of Stimulation Amplitude vs. Gamma Power [NEW]
-
+% 13) Create Scatter Plot of Stimulation Amplitude vs. Gamma Power [NEW]
 fprintf('\nCreating relationship plot: Stim Amp vs. Gamma Power...\n');
 
 % Find the indices where BOTH variables have valid data (are not NaN)
