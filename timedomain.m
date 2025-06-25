@@ -35,20 +35,20 @@ for i = 1:nTD
     tdChan = BrainSenseTimeDomain.Channel{i};
     tdTime = tdTimes(i);
     
-    % find the first LFP row within tolerance
+    % Find the first LFP row within tolerance
     dt = abs(lfpTimes - tdTime);
     idx = find(dt <= tol, 1);
     if isempty(idx)
         continue;
     end
     
-    % split LFP channels, pick the one matching tdChan
+    % Split LFP channels, pick the one matching tdChan
     lfpChs = strsplit(BrainSenseLfp(idx).Channel, ',');
     if ~any(strcmp(lfpChs, tdChan))
         continue;
     end
     
-    % grab the correct side's RateInHertz
+    % Grab the correct side's RateInHertz
     snap = BrainSenseLfp(idx).TherapySnapshot;
     if endsWith(tdChan,'_LEFT')
         rate = snap.Left.RateInHertz;
@@ -253,10 +253,10 @@ if ~isempty(all_times)
     end
     
     % Add labels and title
-    xlabel('Time (seconds)', 'FontSize', 12, 'FontWeight', 'bold');
+    xlabel('Time (seconds) | Relative to inital value of firstpacketdatetime', 'FontSize', 12, 'FontWeight', 'bold');
     % Replace underscores with escaped underscores in the title
     escapedCombo = strrep(selectedCombo, '_', '\_');
-    title(sprintf('Raw Time Domain Signal with Stimulation Amplitude: %s', escapedCombo), ...
+    title(sprintf('Raw Time Domain Signal with Stimulation Amplitude @ %s', escapedCombo), ...
           'FontSize', 14, 'FontWeight', 'bold');
     grid on;
     
@@ -389,6 +389,254 @@ else
     fprintf('No time domain data found for the selected combination.\n');
 end
 
-% Push updated table back to base workspace
-assignin('base','BrainSenseTimeDomain',BrainSenseTimeDomain);
-fprintf('\nProcessing complete!\n');
+%% 10) Compute gamma power vs stimulation amplitude
+% Add this code after your existing processing (after line ~340)
+% This assumes you have already run the code that creates:
+% - all_times: datetime array of signal timestamps
+% - all_signals: raw signal data
+% - all_stim_times: datetime array of stimulation timestamps
+% - all_stim_amps: stimulation amplitude data
+
+% Parameters
+epoch_duration_sec = 10;  % 10-second epochs
+fs = 250;  % Sampling frequency (Hz)
+gamma_band = [60 70];  % High gamma band for 65 Hz entrained response
+
+% Welch's method parameters
+welch_window_sec = 2;  % 2-second window
+welch_overlap = 0.5;   % 50% overlap
+welch_window_samples = welch_window_sec * fs;
+welch_overlap_samples = floor(welch_window_samples * welch_overlap);
+
+fprintf('\n\n=== Gamma Power vs Stimulation Amplitude Analysis ===\n');
+fprintf('Epoch duration: %d seconds\n', epoch_duration_sec);
+fprintf('Gamma band: %d-%d Hz (targeting 65 Hz entrained response)\n', gamma_band(1), gamma_band(2));
+
+% Check if we have data
+if isempty(all_times) || isempty(all_signals)
+    fprintf('No time domain data available for gamma analysis.\n');
+    return;
+end
+
+% Initialize storage for results
+epoch_results = [];
+
+% Convert epoch duration to samples
+epoch_samples = epoch_duration_sec * fs;
+
+% Find the total duration of the recording
+total_duration_sec = seconds(all_times(end) - all_times(1));
+num_epochs = floor(total_duration_sec / epoch_duration_sec);
+
+fprintf('Total recording duration: %.1f seconds\n', total_duration_sec);
+fprintf('Number of potential epochs: %d\n', num_epochs);
+
+% Process each epoch
+valid_epochs = 0;
+for epoch_idx = 1:num_epochs
+    % Define epoch boundaries
+    epoch_start_sec = (epoch_idx - 1) * epoch_duration_sec;
+    epoch_end_sec = epoch_idx * epoch_duration_sec;
+    
+    % Convert to datetime boundaries
+    epoch_start_time = all_times(1) + seconds(epoch_start_sec);
+    epoch_end_time = all_times(1) + seconds(epoch_end_sec);
+    
+    % Find samples within this epoch
+    epoch_mask = (all_times >= epoch_start_time) & (all_times < epoch_end_time);
+    epoch_times = all_times(epoch_mask);
+    epoch_signal = all_signals(epoch_mask);
+    
+    if isempty(epoch_times)
+        continue;
+    end
+    
+    % Check for dropped packets in this epoch
+    % Calculate time differences between consecutive samples
+    time_diffs_ms = milliseconds(diff(epoch_times));
+    expected_interval_ms = 4;  % Expected 4ms between samples at 250Hz
+    tolerance_ms = 1;  % Allow 1ms tolerance
+    
+    % Check if any gap exceeds expected interval
+    has_dropped_packets = any(time_diffs_ms > (expected_interval_ms + tolerance_ms));
+    
+    % Also check if we have the expected number of samples
+    expected_samples = epoch_duration_sec * fs;
+    sample_count_ok = abs(length(epoch_signal) - expected_samples) <= (0.01 * expected_samples); % 1% tolerance
+    
+    if has_dropped_packets || ~sample_count_ok
+        fprintf('Epoch %d: Skipped (dropped packets or incomplete data)\n', epoch_idx);
+        continue;
+    end
+    
+    % Valid epoch - compute gamma power
+    try
+        % Compute power spectral density using Welch's method
+        [pxx, f] = pwelch(epoch_signal, hamming(welch_window_samples), ...
+                          welch_overlap_samples, [], fs);
+        
+        % Extract gamma band power
+        gamma_idx = (f >= gamma_band(1)) & (f <= gamma_band(2));
+        gamma_power = mean(pxx(gamma_idx));  % Average power in gamma band
+        
+        % Compute average stimulation amplitude for this epoch
+        if ~isempty(all_stim_times) && ~isempty(all_stim_amps)
+            % Find stim measurements within this epoch
+            stim_mask = (all_stim_times >= epoch_start_time) & ...
+                       (all_stim_times < epoch_end_time);
+            epoch_stim_amps = all_stim_amps(stim_mask);
+            
+            if ~isempty(epoch_stim_amps)
+                avg_stim_amp = mean(epoch_stim_amps);
+            else
+                % No stim data in this epoch - interpolate from nearest values
+                % Find nearest stim measurements before and after epoch
+                before_idx = find(all_stim_times < epoch_start_time, 1, 'last');
+                after_idx = find(all_stim_times > epoch_end_time, 1, 'first');
+                
+                if ~isempty(before_idx) && ~isempty(after_idx)
+                    % Linear interpolation
+                    t1 = seconds(all_stim_times(before_idx) - all_times(1));
+                    t2 = seconds(all_stim_times(after_idx) - all_times(1));
+                    epoch_mid_time = epoch_start_sec + epoch_duration_sec/2;
+                    
+                    avg_stim_amp = interp1([t1, t2], ...
+                                          [all_stim_amps(before_idx), all_stim_amps(after_idx)], ...
+                                          epoch_mid_time, 'linear');
+                elseif ~isempty(before_idx)
+                    avg_stim_amp = all_stim_amps(before_idx);
+                elseif ~isempty(after_idx)
+                    avg_stim_amp = all_stim_amps(after_idx);
+                else
+                    % No stim data available
+                    continue;
+                end
+            end
+        else
+            % No stimulation data available
+            avg_stim_amp = 0;
+        end
+        
+        % Store results
+        epoch_results(end+1, :) = [avg_stim_amp, gamma_power];
+        valid_epochs = valid_epochs + 1;
+        
+        if mod(epoch_idx, 10) == 0
+            fprintf('Processed epoch %d/%d\n', epoch_idx, num_epochs);
+        end
+        
+    catch ME
+        fprintf('Epoch %d: Error computing gamma power - %s\n', epoch_idx, ME.message);
+        continue;
+    end
+end
+
+fprintf('\nValid epochs processed: %d/%d\n', valid_epochs, num_epochs);
+
+%% Create scatter plot of gamma power vs stimulation amplitude
+if ~isempty(epoch_results)
+    figure('Position', [100, 100, 800, 600]);
+    
+    % Extract data
+    stim_amps = epoch_results(:, 1);
+    gamma_powers = epoch_results(:, 2);
+    
+    % Create scatter plot
+    scatter(stim_amps, gamma_powers, 100, 'filled', 'MarkerFaceColor', [0.2 0.4 0.8], ...
+            'MarkerEdgeColor', 'k', 'LineWidth', 1.5);
+    
+    % Add labels and title
+    xlabel('Stimulation Amplitude (mA)', 'FontSize', 12, 'FontWeight', 'bold');
+    ylabel('Gamma Power (μV²/Hz)', 'FontSize', 12, 'FontWeight', 'bold');
+    title(sprintf('Gamma Power (%d-%d Hz, 65 Hz Entrained) vs Stimulation Amplitude', gamma_band(1), gamma_band(2)), ...
+          'FontSize', 14, 'FontWeight', 'bold');
+    grid on;
+    
+    % Add trend line if there are enough points
+    if length(stim_amps) >= 3
+        % Fit linear regression
+        p = polyfit(stim_amps, gamma_powers, 1);
+        
+        % Generate trend line
+        x_trend = linspace(min(stim_amps), max(stim_amps), 100);
+        y_trend = polyval(p, x_trend);
+        
+        hold on;
+        plot(x_trend, y_trend, 'r-', 'LineWidth', 2);
+        
+        % Calculate R-squared
+        y_fit = polyval(p, stim_amps);
+        SS_res = sum((gamma_powers - y_fit).^2);
+        SS_tot = sum((gamma_powers - mean(gamma_powers)).^2);
+        R_squared = 1 - (SS_res / SS_tot);
+        
+        % Add legend with statistics
+        legend({'Data points', sprintf('Linear fit (R² = %.3f)', R_squared)}, ...
+               'Location', 'best', 'FontSize', 10);
+        
+        % Add text with equation
+        equation_text = sprintf('y = %.2e·x + %.2e', p(1), p(2));
+        text(0.05, 0.95, equation_text, 'Units', 'normalized', ...
+             'FontSize', 10, 'BackgroundColor', 'white', 'EdgeColor', 'black');
+    end
+    
+    hold off;
+    
+    % Print summary statistics
+    fprintf('\n=== Results Summary ===\n');
+    fprintf('Number of valid epochs: %d\n', size(epoch_results, 1));
+    fprintf('Stimulation amplitude range: [%.2f, %.2f] mA\n', min(stim_amps), max(stim_amps));
+    fprintf('Gamma power range: [%.2e, %.2e] μV²/Hz\n', min(gamma_powers), max(gamma_powers));
+    
+    if length(stim_amps) >= 3
+        % Calculate correlation coefficient using corrcoef (built-in MATLAB)
+        R_matrix = corrcoef(stim_amps, gamma_powers);
+        correlation_coeff = R_matrix(1,2);
+        fprintf('Linear correlation coefficient: %.3f\n', correlation_coeff);
+        fprintf('Slope: %.2e μV²/Hz per mA\n', p(1));
+    end
+    
+    % Create results table for export
+    gamma_stim_table = table(stim_amps, gamma_powers, ...
+                            'VariableNames', {'StimAmplitude_mA', 'GammaPower_uV2_Hz'});
+    
+    % Save to workspace
+    assignin('base', 'gamma_stim_results', gamma_stim_table);
+    assignin('base', 'epoch_results', epoch_results);
+    
+    fprintf('\nResults saved to workspace as ''gamma_stim_results'' (table) and ''epoch_results'' (array)\n');
+    
+else
+    fprintf('\nNo valid epochs found for analysis.\n');
+    fprintf('This could be due to:\n');
+    fprintf('  - Too many dropped packets in the recording\n');
+    fprintf('  - Recording duration shorter than epoch length\n');
+    fprintf('  - Missing stimulation amplitude data\n');
+end
+
+%% Optional: Create a heatmap if you have enough data points
+if size(epoch_results, 1) >= 20
+    figure('Position', [950, 100, 600, 500]);
+    
+    % Create 2D histogram
+    num_bins = 10;
+    stim_edges = linspace(min(stim_amps), max(stim_amps), num_bins);
+    gamma_edges = linspace(min(gamma_powers), max(gamma_powers), num_bins);
+    
+    % Count occurrences in each bin
+    [N, ~, ~] = histcounts2(stim_amps, gamma_powers, stim_edges, gamma_edges);
+    
+    % Create heatmap
+    imagesc(stim_edges(1:end-1), gamma_edges(1:end-1), N');
+    axis xy;
+    colorbar;
+    colormap(hot);
+    
+    xlabel('Stimulation Amplitude (mA)', 'FontSize', 12, 'FontWeight', 'bold');
+    ylabel('Gamma Power (μV²/Hz)', 'FontSize', 12, 'FontWeight', 'bold');
+    title('Density Heatmap: Gamma Power vs Stimulation', 'FontSize', 14, 'FontWeight', 'bold');
+    
+    fprintf('\nDensity heatmap created (requires 20+ data points)\n');
+end
+
+fprintf('\n=== Analysis Complete ===\n');
