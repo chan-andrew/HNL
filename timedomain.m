@@ -389,7 +389,7 @@ else
     fprintf('No time domain data found for the selected combination.\n');
 end
 
-%% 10) Compute gamma power vs stimulation amplitude
+% 10) Compute gamma power vs stimulation amplitude
 % Add this code after your existing processing (after line ~340)
 % This assumes you have already run the code that creates:
 % - all_times: datetime array of signal timestamps
@@ -533,7 +533,7 @@ end
 
 fprintf('\nValid epochs processed: %d/%d\n', valid_epochs, num_epochs);
 
-%% Create scatter plot of gamma power vs stimulation amplitude
+% Create scatter plot of gamma power vs stimulation amplitude
 if ~isempty(epoch_results)
     figure('Position', [100, 100, 800, 600]);
     
@@ -614,7 +614,7 @@ else
     fprintf('  - Missing stimulation amplitude data\n');
 end
 
-%% Optional: Create a heatmap if you have enough data points
+% Making a heatmap if there are enough data points
 if size(epoch_results, 1) >= 20
     figure('Position', [950, 100, 600, 500]);
     
