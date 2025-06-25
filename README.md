@@ -110,27 +110,38 @@ Adds a structured column of nested tables to `BrainSenseTimeDomain`, containing 
 
 * ### `timedomain.m`
 
-Plots **raw time-domain neural signals** and corresponding **stimulation amplitude (mA)** for a user-selected channel and stimulation rate combination from Percept JSON files.
+Analyzes how **gamma-band power** in raw time-domain neural signals correlates with **stimulation amplitude** from a Medtronic Percept JSON file.
 
-**Key Features:**
+**Main Functions:**
 
-* Prompts the user to select a BrainSense JSON file and decodes both `BrainSenseTimeDomain` and `BrainSenseLfp` data.
-* Calculates sample-level timestamps using `FirstPacketDateTime` fields with proper UTC alignment.
-* Matches each time-domain row with the nearest LFP packet (within ±1.5 seconds) and extracts the corresponding stimulation rate (`RateInHertz`), storing it in a new column `StimRateHz`.
-* Groups rows by unique `(Channel, StimRateHz)` combinations and allows user selection.
-* For each selected group:
-  - Extracts time-aligned stimulation amplitude data from the LFP stream (sampled at 2 Hz).
-  - Aggregates raw signal samples from time-domain data (sampled at 250 Hz) and builds timestamp vectors (4 ms intervals).
-* Plots the raw signal and stimulation amplitude on dual y-axes:
-  - **Left y-axis**: LFP amplitude (blue)
-  - **Right y-axis**: Stimulation amplitude in mA (red)
-* Highlights dropped packet regions (time gaps >50 ms) using shaded patches and optional annotations.
-* Dynamically adjusts both y-axes so their zero lines align visually.
-* Displays statistics about signal and stimulation data, including duration, sampling rate, and range.
-* Pushes the updated `BrainSenseTimeDomain` table back to the MATLAB workspace with appended `StimRateHz` data.
+* Parses both `BrainSenseTimeDomain` and `BrainSenseLfp` fields from the JSON file.
+* Converts packet timestamps to `datetime` with proper UTC alignment.
+* Matches each time-domain row to the closest LFP packet within ±1.5 seconds.
+* Extracts stimulation **rate** and **amplitude**, synchronizing them with raw signal timestamps.
+* Allows user to select a specific `(Channel, StimRateHz)` combination for focused analysis.
 
-This script is especially useful for exploring **real-time relationships** between stimulation amplitude and raw neural activity in a visual and quantitative manner, enabling exploratory analysis of adaptive DBS responses in Parkinson’s Disease patients.
+**Signal & Stimulation Visualization:**
 
+* Aggregates raw signal samples (sampled at 250 Hz) and stimulation amplitude (sampled at 2 Hz).
+* Plots signal and stimulation on **dual y-axes**, with:
+  * **Left y-axis**: Raw neural signal (blue)
+  * **Right y-axis**: Stimulation amplitude in mA (red)
+* Highlights dropped packets (gaps >50 ms) with shaded regions on the plot.
+* Aligns the y-axis zero lines visually for better interpretation.
+* Prints detailed statistics about recording duration, signal/stimulation range, and sample counts.
+
+**Gamma Power Analysis:**
+
+* Segments the signal into **10-second epochs** and checks each for dropped packets or incomplete data.
+* Computes **power spectral density (PSD)** using Welch’s method.
+* Extracts **gamma-band power (60–70 Hz)** and aligns it with **average stimulation amplitude** per epoch.
+* Produces a scatter plot of gamma power vs. stimulation amplitude:
+  * Adds a **linear regression trendline**
+  * Reports **R² value**, **correlation coefficient**, and **slope**
+* Optionally generates a **2D heatmap** of gamma power vs stim amplitude density (requires ≥20 valid epochs).
+* Saves results to the MATLAB workspace as:
+  * `gamma_stim_results` (table)
+  * `epoch_results` (array)
 
 ---
 
