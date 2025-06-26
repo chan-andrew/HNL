@@ -268,7 +268,7 @@ if ~isempty(all_times)
     
     % Find gaps in the time series (more than 50ms between consecutive samples indicates dropped packets)
     time_diffs = diff(all_times);
-    gap_threshold = milliseconds(50); % Normal sampling is 4ms, so 50ms indicates dropped packets
+    gap_threshold = milliseconds(50); % Normal sampling is 4ms, so 50ms indicates dropped packets, can change this later down the line if needed
     gap_starts = find(time_diffs > gap_threshold);
     
     if ~isempty(gap_starts)
