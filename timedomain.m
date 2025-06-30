@@ -190,8 +190,7 @@ all_signals = [];
 
 for idx = selectedIndices
     % Get the time domain data
-    if ismember('TimeDomainData', BrainSenseTimeDomain.Properties.VariableNames) && ...
-       ~isempty(BrainSenseTimeDomain.TimeDomainData{idx})
+    if ismember('TimeDomainData', BrainSenseTimeDomain.Properties.VariableNames) && ~isempty(BrainSenseTimeDomain.TimeDomainData{idx})
         
         signal = BrainSenseTimeDomain.TimeDomainData{idx};
         
@@ -242,8 +241,7 @@ if ~isempty(all_times)
         stim_relative_time_sec = seconds(all_stim_times - start_time);
         
         % Plot stimulation amplitude
-        plot(stim_relative_time_sec, all_stim_amps, 'ro-', ...
-             'LineWidth', 2, 'MarkerSize', 4, 'MarkerFaceColor', 'r');
+        plot(stim_relative_time_sec, all_stim_amps, 'ro-', 'LineWidth', 2, 'MarkerSize', 4, 'MarkerFaceColor', 'r');
         ylabel('Stimulation Amplitude (mA)', 'FontSize', 12, 'FontWeight', 'bold');
         ax = gca;
         ax.YColor = 'r';
@@ -256,8 +254,7 @@ if ~isempty(all_times)
     xlabel('Time (seconds) | Relative to inital value of firstpacketdatetime', 'FontSize', 12, 'FontWeight', 'bold');
     % Replace underscores with escaped underscores in the title
     escapedCombo = strrep(selectedCombo, '_', '\_');
-    title(sprintf('Raw Time Domain Signal with Stimulation Amplitude @ %s', escapedCombo), ...
-          'FontSize', 14, 'FontWeight', 'bold');
+    title(sprintf('Raw Time Domain Signal with Stimulation Amplitude @ %s', escapedCombo), 'FontSize', 14, 'FontWeight', 'bold');
     grid on;
     
     % Store the current axes before any modifications
@@ -289,20 +286,14 @@ if ~isempty(all_times)
             gap_duration = gap_end_time - gap_start_time;
             
             % Shade the dropped packet region
-            patch([gap_start_time gap_end_time gap_end_time gap_start_time], ...
-                  [ylims_left(1) ylims_left(1) ylims_left(2) ylims_left(2)], ...
-                  [0.9 0.9 0.9], 'FaceAlpha', 0.5, 'EdgeColor', 'none', ...
-                  'HandleVisibility', 'off');
+            patch([gap_start_time gap_end_time gap_end_time gap_start_time], [ylims_left(1) ylims_left(1) ylims_left(2) ylims_left(2)], [0.9 0.9 0.9], 'FaceAlpha', 0.5, 'EdgeColor', 'none', 'HandleVisibility', 'off');
             
             % Add text label for longer gaps (> 1 second)
             if gap_duration > 1
-                text(mean([gap_start_time gap_end_time]), ylims_left(2)*0.9, ...
-                     'Dropped Packets', 'HorizontalAlignment', 'center', ...
-                     'FontSize', 10, 'Rotation', 90, 'Color', [0.5 0.5 0.5]);
+                text(mean([gap_start_time gap_end_time]), ylims_left(2)*0.9, 'Dropped Packets', 'HorizontalAlignment', 'center', 'FontSize', 10, 'Rotation', 90, 'Color', [0.5 0.5 0.5]);
             end
             
-            fprintf('  Gap %d: %.1f - %.1f seconds (duration: %.2f s)\n', ...
-                    i, gap_start_time, gap_end_time, gap_duration);
+            fprintf('  Gap %d: %.1f - %.1f seconds (duration: %.2f s)\n', i, gap_start_time, gap_end_time, gap_duration);
         end
     end
     
@@ -472,8 +463,7 @@ for epoch_idx = 1:num_epochs
     % Valid epoch - compute gamma power
     try
         % Compute power spectral density using Welch's method
-        [pxx, f] = pwelch(epoch_signal, hamming(welch_window_samples), ...
-                          welch_overlap_samples, [], fs);
+        [pxx, f] = pwelch(epoch_signal, hamming(welch_window_samples), welch_overlap_samples, [], fs);
         
         % Extract gamma band power
         gamma_idx = (f >= gamma_band(1)) & (f <= gamma_band(2));
@@ -482,8 +472,7 @@ for epoch_idx = 1:num_epochs
         % Compute average stimulation amplitude for this epoch
         if ~isempty(all_stim_times) && ~isempty(all_stim_amps)
             % Find stim measurements within this epoch
-            stim_mask = (all_stim_times >= epoch_start_time) & ...
-                       (all_stim_times < epoch_end_time);
+            stim_mask = (all_stim_times >= epoch_start_time) & (all_stim_times < epoch_end_time);
             epoch_stim_amps = all_stim_amps(stim_mask);
             
             if ~isempty(epoch_stim_amps)
@@ -500,9 +489,7 @@ for epoch_idx = 1:num_epochs
                     t2 = seconds(all_stim_times(after_idx) - all_times(1));
                     epoch_mid_time = epoch_start_sec + epoch_duration_sec/2;
                     
-                    avg_stim_amp = interp1([t1, t2], ...
-                                          [all_stim_amps(before_idx), all_stim_amps(after_idx)], ...
-                                          epoch_mid_time, 'linear');
+                    avg_stim_amp = interp1([t1, t2], [all_stim_amps(before_idx), all_stim_amps(after_idx)], epoch_mid_time, 'linear');
                 elseif ~isempty(before_idx)
                     avg_stim_amp = all_stim_amps(before_idx);
                 elseif ~isempty(after_idx)
@@ -542,14 +529,12 @@ if ~isempty(epoch_results)
     gamma_powers = epoch_results(:, 2);
     
     % Create scatter plot
-    scatter(stim_amps, gamma_powers, 100, 'filled', 'MarkerFaceColor', [0.2 0.4 0.8], ...
-            'MarkerEdgeColor', 'k', 'LineWidth', 1.5);
+    scatter(stim_amps, gamma_powers, 100, 'filled', 'MarkerFaceColor', [0.2 0.4 0.8], 'MarkerEdgeColor', 'k', 'LineWidth', 1.5);
     
     % Add labels and title
     xlabel('Stimulation Amplitude (mA)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Gamma Power (μV²/Hz)', 'FontSize', 12, 'FontWeight', 'bold');
-    title(sprintf('Gamma Power (%d-%d Hz, 65 Hz Entrained) vs Stimulation Amplitude', gamma_band(1), gamma_band(2)), ...
-          'FontSize', 14, 'FontWeight', 'bold');
+    title(sprintf('Gamma Power (%d-%d Hz, 65 Hz Entrained) vs Stimulation Amplitude', gamma_band(1), gamma_band(2)), 'FontSize', 14, 'FontWeight', 'bold');
     grid on;
     
     % Add trend line if there are enough points
@@ -571,13 +556,11 @@ if ~isempty(epoch_results)
         R_squared = 1 - (SS_res / SS_tot);
         
         % Add legend with statistics
-        legend({'Data points', sprintf('Linear fit (R² = %.3f)', R_squared)}, ...
-               'Location', 'best', 'FontSize', 10);
+        legend({'Data points', sprintf('Linear fit (R² = %.3f)', R_squared)}, 'Location', 'best', 'FontSize', 10);
         
         % Add text with equation
         equation_text = sprintf('y = %.2e·x + %.2e', p(1), p(2));
-        text(0.05, 0.95, equation_text, 'Units', 'normalized', ...
-             'FontSize', 10, 'BackgroundColor', 'white', 'EdgeColor', 'black');
+        text(0.05, 0.95, equation_text, 'Units', 'normalized', 'FontSize', 10, 'BackgroundColor', 'white', 'EdgeColor', 'black');
     end
     
     hold off;
@@ -597,8 +580,7 @@ if ~isempty(epoch_results)
     end
     
     % Create results table for export
-    gamma_stim_table = table(stim_amps, gamma_powers, ...
-                            'VariableNames', {'StimAmplitude_mA', 'GammaPower_uV2_Hz'});
+    gamma_stim_table = table(stim_amps, gamma_powers, 'VariableNames', {'StimAmplitude_mA', 'GammaPower_uV2_Hz'});
     
     % Save to workspace
     assignin('base', 'gamma_stim_results', gamma_stim_table);
