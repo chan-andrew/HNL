@@ -381,27 +381,34 @@ else
 end
 
 % 10) Compute gamma power vs stimulation amplitude
-% Add this code after your existing processing (after line ~340)
-% This assumes you have already run the code that creates:
-% - all_times: datetime array of signal timestamps
-% - all_signals: raw signal data
-% - all_stim_times: datetime array of stimulation timestamps
-% - all_stim_amps: stimulation amplitude data
+
+% Get the stimulation rate for the selected channel
+selected_stim_rate = stimRates(selectedIndices(1)); % Get stim rate from first selected index
+
+% Calculate gamma band as 1/2 the stim rate (±1 Hz)
+if ~isnan(selected_stim_rate)
+    gamma_center = selected_stim_rate / 2;
+    gamma_band = [gamma_center - 1, gamma_center + 1];
+    fprintf('Selected stimulation rate: %.1f Hz\n', selected_stim_rate);
+    fprintf('Calculated gamma band: [%.1f, %.1f] Hz (targeting %.1f Hz subharmonic)\n', gamma_band(1), gamma_band(2), gamma_center);
+else
+    error('No valid stimulation rate found for selected channel');
+end
 
 % Parameters
 epoch_duration_sec = 10;  % 10-second epochs, also maybe experiment wtih this
 fs = 250;  % Sampling frequency (Hz)
-gamma_band = [60 70];  % High gamma band for 65 Hz entrained response
+% gamma_band is now calculated above based on stim rate
 
 % Welch's method parameters
-welch_window_sec = 2;  % 2-second window
-welch_overlap = 0.5;   % 50% overlap
+welch_window_sec = 2; % 2-second window
+welch_overlap = 0.5; % 50% overlap
 welch_window_samples = welch_window_sec * fs;
 welch_overlap_samples = floor(welch_window_samples * welch_overlap);
 
 fprintf('\n\n=== Gamma Power vs Stimulation Amplitude Analysis ===\n');
 fprintf('Epoch duration: %d seconds\n', epoch_duration_sec);
-fprintf('Gamma band: %d-%d Hz (targeting 65 Hz entrained response)\n', gamma_band(1), gamma_band(2));
+fprintf('Gamma band: %.1f-%.1f Hz (targeting %.1f Hz subharmonic response)\n', gamma_band(1), gamma_band(2), gamma_center);
 
 % Check if we have data
 if isempty(all_times) || isempty(all_signals)
