@@ -293,7 +293,7 @@ if ~isempty(all_times)
                 text(mean([gap_start_time gap_end_time]), ylims_left(2)*0.9, 'Dropped Packets', 'HorizontalAlignment', 'center', 'FontSize', 10, 'Rotation', 90, 'Color', [0.5 0.5 0.5]);
             end
             
-            fprintf('  Gap %d: %.1f - %.1f seconds (duration: %.2f s)\n', i, gap_start_time, gap_end_time, gap_duration);
+            fprintf('Gap %d: %.1f - %.1f seconds (duration: %.2f s)\n', i, gap_start_time, gap_end_time, gap_duration);
         end
     end
     
@@ -389,7 +389,7 @@ end
 % - all_stim_amps: stimulation amplitude data
 
 % Parameters
-epoch_duration_sec = 10;  % 10-second epochs
+epoch_duration_sec = 10;  % 10-second epochs, also maybe experiment wtih this
 fs = 250;  % Sampling frequency (Hz)
 gamma_band = [60 70];  % High gamma band for 65 Hz entrained response
 
