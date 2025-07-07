@@ -381,6 +381,7 @@ else
 end
 
 % 10) Compute gamma power vs stimulation amplitude
+% this is the new stuff so might need to come back to this and get older versiosn in github
 
 % Get the stimulation rate for the selected channel
 selected_stim_rate = stimRates(selectedIndices(1)); % Get stim rate from first selected index
