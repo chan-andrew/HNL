@@ -604,6 +604,7 @@ else
     fprintf('  - Missing stimulation amplitude data\n');
 end
 
+%{
 % Making a heatmap if there are enough data points
 if size(epoch_results, 1) >= 20
     figure('Position', [950, 100, 600, 500]);
@@ -627,6 +628,195 @@ if size(epoch_results, 1) >= 20
     title('Density Heatmap: Gamma Power vs Stimulation', 'FontSize', 14, 'FontWeight', 'bold');
     
     fprintf('\nDensity heatmap created (requires 20+ data points)\n');
+end
+
+%}
+
+% 11) Plot all spectra from valid epochs
+fprintf('\n=== Creating Spectra Plot ===\n');
+
+if ~isempty(epoch_results)
+    figure('Position', [100, 100, 1000, 600]);
+    
+    % Storage for all spectra
+    all_psd_db = [];
+    all_freqs = [];
+    stim_amp_colors = [];
+    
+    % Reprocess epochs to get spectral data
+    valid_epoch_count = 0;
+    for epoch_idx = 1:num_epochs
+        % Define epoch boundaries
+        epoch_start_sec = (epoch_idx - 1) * epoch_duration_sec;
+        epoch_end_sec = epoch_idx * epoch_duration_sec;
+        
+        % Convert to datetime boundaries
+        epoch_start_time = all_times(1) + seconds(epoch_start_sec);
+        epoch_end_time = all_times(1) + seconds(epoch_end_sec);
+        
+        % Find samples within this epoch
+        epoch_mask = (all_times >= epoch_start_time) & (all_times < epoch_end_time);
+        epoch_times = all_times(epoch_mask);
+        epoch_signal = all_signals(epoch_mask);
+        
+        if isempty(epoch_times)
+            continue;
+        end
+        
+        % Check for dropped packets and sample count (same as before)
+        time_diffs_ms = milliseconds(diff(epoch_times));
+        expected_interval_ms = 4;
+        tolerance_ms = 1;
+        has_dropped_packets = any(time_diffs_ms > (expected_interval_ms + tolerance_ms));
+        
+        expected_samples = epoch_duration_sec * fs;
+        sample_count_ok = abs(length(epoch_signal) - expected_samples) <= (0.01 * expected_samples);
+        
+        if has_dropped_packets || ~sample_count_ok
+            continue;
+        end
+        
+        % Valid epoch - compute PSD
+        try
+            [pxx, f] = pwelch(epoch_signal, hamming(welch_window_samples), welch_overlap_samples, [], fs);
+            
+            % Convert to dB (10*log10 of PSD)
+            psd_db = 10 * log10(pxx);
+            
+            % Get corresponding stimulation amplitude
+            if ~isempty(all_stim_times) && ~isempty(all_stim_amps)
+                % Find stim measurements within this epoch
+                stim_mask = (all_stim_times >= epoch_start_time) & (all_stim_times < epoch_end_time);
+                epoch_stim_amps = all_stim_amps(stim_mask);
+                
+                if ~isempty(epoch_stim_amps)
+                    avg_stim_amp = mean(epoch_stim_amps);
+                else
+                    % Interpolate as before
+                    before_idx = find(all_stim_times < epoch_start_time, 1, 'last');
+                    after_idx = find(all_stim_times > epoch_end_time, 1, 'first');
+                    
+                    if ~isempty(before_idx) && ~isempty(after_idx)
+                        t1 = seconds(all_stim_times(before_idx) - all_times(1));
+                        t2 = seconds(all_stim_times(after_idx) - all_times(1));
+                        epoch_mid_time = epoch_start_sec + epoch_duration_sec/2;
+                        avg_stim_amp = interp1([t1, t2], [all_stim_amps(before_idx), all_stim_amps(after_idx)], epoch_mid_time, 'linear');
+                    elseif ~isempty(before_idx)
+                        avg_stim_amp = all_stim_amps(before_idx);
+                    elseif ~isempty(after_idx)
+                        avg_stim_amp = all_stim_amps(after_idx);
+                    else
+                        continue;
+                    end
+                end
+            else
+                avg_stim_amp = 0;
+            end
+            
+            % Store data
+            if isempty(all_psd_db)
+                all_psd_db = psd_db';
+                all_freqs = f;
+            else
+                all_psd_db = [all_psd_db; psd_db'];
+            end
+            stim_amp_colors = [stim_amp_colors; avg_stim_amp];
+            
+            valid_epoch_count = valid_epoch_count + 1;
+            
+        catch ME
+            fprintf('Error computing PSD for epoch %d: %s\n', epoch_idx, ME.message);
+            continue;
+        end
+    end
+    
+    % Plot all spectra
+    if ~isempty(all_psd_db)
+        % Create colormap based on stimulation amplitude
+        if length(unique(stim_amp_colors)) > 1
+            % Normalize stimulation amplitudes for colormap
+            stim_norm = (stim_amp_colors - min(stim_amp_colors)) / (max(stim_amp_colors) - min(stim_amp_colors));
+            
+            % Use jet colormap
+            cmap = jet(256);
+            colors = cmap(round(stim_norm * 255) + 1, :);
+        else
+            % All same stimulation amplitude - use single color
+            colors = repmat([0.2, 0.4, 0.8], size(all_psd_db, 1), 1);
+        end
+        
+        % Plot each spectrum
+        hold on;
+        for i = 1:size(all_psd_db, 1)
+            plot(all_freqs, all_psd_db(i, :), 'Color', colors(i, :), 'LineWidth', 0.8);
+        end
+        
+        % Highlight gamma band
+        ylims = ylim;
+        patch([gamma_band(1) gamma_band(2) gamma_band(2) gamma_band(1)], ...
+              [ylims(1) ylims(1) ylims(2) ylims(2)], ...
+              [0.9 0.9 0.9], 'FaceAlpha', 0.3, 'EdgeColor', 'none', 'HandleVisibility', 'off');
+        
+        % Add vertical lines for gamma band boundaries
+        line([gamma_band(1) gamma_band(1)], ylims, 'Color', 'k', 'LineStyle', '--', 'LineWidth', 1.5);
+        line([gamma_band(2) gamma_band(2)], ylims, 'Color', 'k', 'LineStyle', '--', 'LineWidth', 1.5);
+        
+        % Add labels and title
+        xlabel('Frequency (Hz)', 'FontSize', 12, 'FontWeight', 'bold');
+        ylabel('Power Spectral Density (dB)', 'FontSize', 12, 'FontWeight', 'bold');
+        title(sprintf('All Epoch Spectra (n=%d) - Colored by Stimulation Amplitude', valid_epoch_count), 'FontSize', 14, 'FontWeight', 'bold');
+        grid on;
+        
+        % Set frequency limits (0 to 100 Hz typically covers most interesting activity)
+        xlim([0, min(100, max(all_freqs))]);
+        
+        % Add colorbar if stimulation amplitudes vary
+        if length(unique(stim_amp_colors)) > 1
+            colorbar;
+            caxis([min(stim_amp_colors), max(stim_amp_colors)]);
+            c = colorbar;
+            c.Label.String = 'Stimulation Amplitude (mA)';
+            c.Label.FontSize = 12;
+            c.Label.FontWeight = 'bold';
+        end
+        
+        % Add legend for gamma band
+        legend_entries = {};
+        legend_handles = [];
+        
+        % Add dummy handles for legend
+        h1 = plot(NaN, NaN, 'Color', [0.5, 0.5, 0.5], 'LineWidth', 0.8);
+        legend_handles = [legend_handles, h1];
+        legend_entries{end+1} = 'Epoch Spectra';
+        
+        h2 = patch(NaN, NaN, [0.9 0.9 0.9], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        legend_handles = [legend_handles, h2];
+        legend_entries{end+1} = sprintf('Gamma Band (%.1f-%.1f Hz)', gamma_band(1), gamma_band(2));
+        
+        legend(legend_handles, legend_entries, 'Location', 'northeast', 'FontSize', 10);
+        
+        hold off;
+        
+        fprintf('Plotted %d spectra\n', valid_epoch_count);
+        fprintf('Frequency range: 0-%.1f Hz\n', min(100, max(all_freqs)));
+        fprintf('Stimulation amplitude range: [%.2f, %.2f] mA\n', min(stim_amp_colors), max(stim_amp_colors));
+        
+        % Save spectral data to workspace
+        spectra_data = struct();
+        spectra_data.frequencies = all_freqs;
+        spectra_data.psd_db = all_psd_db;
+        spectra_data.stim_amplitudes = stim_amp_colors;
+        spectra_data.gamma_band = gamma_band;
+        
+        assignin('base', 'spectra_data', spectra_data);
+        fprintf('Spectral data saved to workspace as ''spectra_data''\n');
+        
+    else
+        fprintf('No valid spectral data found for plotting.\n');
+    end
+    
+else
+    fprintf('No epoch results available for spectral plotting.\n');
 end
 
 fprintf('\n=== Analysis Complete ===\n');
