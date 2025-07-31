@@ -142,6 +142,25 @@ Analyzes how **gamma-band power** in raw time-domain neural signals correlates w
 * Saves results to the MATLAB workspace as:
   * `gamma_stim_results` (table)
   * `epoch_results` (array)
+ 
+* ### `onespectrumforallpatients.m`
+
+Comprehensive batch analysis tool that processes multiple BrainSense JSON files and automatically generates power spectral density analysis for **all channel/stimulation rate combinations**:
+
+* **Revolutionary selective JSON extraction**: Processes large files (up to 500MB) by extracting only necessary sections without loading entire files into memory.
+* **Multi-file batch processing**: Handles multiple JSON files simultaneously with automatic metadata extraction (lead location: STN/GPi, hemisphere: Left/Right).
+* **Intelligent data standardization**: Concatenates data across files with different structures by automatically adding missing columns with appropriate default values.
+* **Temporal alignment**: Matches TimeDomain and LFP data using optimized nearest-neighbor search with configurable time thresholds.
+* **Automatic channel analysis**: Identifies and processes every unique channel/stimulation rate combination without user intervention.
+* **Spectral analysis**: Segments data into 10-second epochs using Welch's method (1-second windows, 50% overlap) and calculates mean power spectral density with confidence intervals.
+* **Comprehensive visualization**: Generates multi-panel subplot grid showing all combinations with highlighted gamma bands (stimulation_rate/2 ± 1 Hz).
+* **Memory optimized**: Uses chunked processing and immediate cleanup for efficient handling of large datasets.
+
+**Outputs:**
+* Multi-panel figure with spectral analysis for all channel/rate combinations
+* `all_spectrum_results`: Detailed spectral data for each combination  
+* `channelRateCombos`: List of all processed combinations
+* Concatenated TimeDomain and LFP data tables
 
 ---
 
