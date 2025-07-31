@@ -261,4 +261,4 @@ We welcome contributions from the research community! Please consider:
 
 **🧠 Advancing Parkinson's Disease Research Through Innovative Data Analysis 🧠**
 
-*For questions, support, or collaboration opportunities, please contact the Hammer Neuromodulation Lab*
+*For questions, support, or collaboration opportunities, please contact me*
