@@ -1,11 +1,7 @@
-% REVOLUTIONARY DBS Spectrum Analysis Script - FIXED VERSION
-% Ultra-fast selective JSON section extraction - avoids parsing massive files
-% Only extracts and parses tiny BrainSenseTimeDomain and BrainSenseLfp sections
-% FIXED: Proper handling of multiple files without artificial time inflation
 
 clear; clc; close all;
 
-%% 1) File selection
+% 1) File selection
 [fileNames, filePath] = uigetfile('*.json','Select BrainSense JSON file(s)', 'MultiSelect', 'on');
 
 if isequal(fileNames,0)
@@ -18,7 +14,7 @@ end
 
 fprintf('Selected %d file(s) for analysis\n', length(fileNames));
 
-%% 2) REVOLUTIONARY: Extract JSON sections without parsing entire files
+% 2) REVOLUTIONARY: Extract JSON sections without parsing entire files
 fprintf('\n=== Revolutionary Selective JSON Section Extraction ===\n');
 
 % Pre-check file sizes
@@ -130,7 +126,7 @@ if successful_count == 0
     error('No valid data was loaded from any file. Please check your JSON files.');
 end
 
-%% 3) Data concatenation with table structure standardization
+% 3) Data concatenation with table structure standardization
 fprintf('\n=== Data Concatenation with Structure Standardization ===\n');
 tic;
 
@@ -325,7 +321,7 @@ end
 clear td_cells lfp_cells valid_td_tables standardized_tables valid_lfp_arrays standardized_lfp_arrays;
 fprintf('Data concatenation completed in %.2f seconds\n', toc);
 
-%% 4) StimRate matching
+% 4) StimRate matching
 fprintf('\n=== StimRate Matching ===\n');
 tic;
 
@@ -392,7 +388,7 @@ end
 fprintf('StimRate matching completed in %.2f seconds\n', toc);
 fprintf('Found rates for %d/%d entries\n', sum(~isnan(all_BrainSenseTimeDomain.StimRateHz)), height(all_BrainSenseTimeDomain));
 
-%% 5) Channel analysis and user selection
+% 5) Channel analysis and user selection
 fprintf('\n=== Channel Analysis ===\n');
 
 valid_mask = ~isnan(all_BrainSenseTimeDomain.StimRateHz);
@@ -453,7 +449,7 @@ selected_stim_rate = comboStimRates(selection);
 
 fprintf('\nSelected: %s | %s %s\n', selectedCombo, selectedLeadLocation, selectedHemisphere);
 
-%% 6) FIXED Spectrum analysis - proper time handling
+% 6) FIXED Spectrum analysis - proper time handling
 gamma_center = selected_stim_rate / 2;
 gamma_band = [gamma_center - 1, gamma_center + 1];
 fprintf('Calculated gamma band: [%.1f, %.1f] Hz\n', gamma_band(1), gamma_band(2));
@@ -564,7 +560,7 @@ for i = 1:total_epochs
     end
 end
 
-%% 7) Plotting and results
+% 7) Plotting and results
 figure('Position', [100, 100, 1000, 700]);
 
 mean_psd_db = mean(all_psd_db, 1);
@@ -572,15 +568,14 @@ std_psd_db = std(all_psd_db, 0, 1);
 
 hold on;
 
-% Plot individual spectra if not too many
-if total_epochs <= 100
-    for i = 1:total_epochs
-        plot(f, all_psd_db(i, :), 'Color', [0.8, 0.8, 0.8], ...
-             'LineWidth', 0.5, 'HandleVisibility', 'off');
-    end
+% Plot individual epoch spectra as light gray lines (like your old script!)
+fprintf('Plotting %d individual epoch spectra...\n', total_epochs);
+for i = 1:total_epochs
+    plot(f, all_psd_db(i, :), 'Color', [0.85, 0.85, 0.85], ...
+         'LineWidth', 0.3, 'HandleVisibility', 'off');
 end
 
-% Plot mean spectrum
+% Plot mean spectrum as bold blue line
 plot(f, mean_psd_db, 'b-', 'LineWidth', 2.5);
 
 % Plot confidence interval
@@ -640,7 +635,7 @@ fprintf('Results saved as ''spectrum_results''\n');
 fprintf('Actual recording duration: %.1f minutes\n', total_actual_duration/60);
 fprintf('Number of epochs analyzed: %d\n', total_epochs);
 
-%% REVOLUTIONARY EXTRACTION FUNCTIONS
+% EXTRACTION FUNCTIONS
 
 function [lead_location, hemisphere] = extract_metadata_from_text(jsonText)
     % Ultra-fast metadata extraction using string search
